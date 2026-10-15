@@ -1,0 +1,31 @@
+# 태산 원격지원 중계 서버 (RustDesk OSS hbbs/hbbr, 수정 없음)
+#
+# 로컬 시험: docker compose up -d
+#   - 키페어는 처음 띄울 때 ./data 에 생긴다(git 제외). 공개키 = data/id_ed25519.pub → 빌드의 TAESAN_RS_PUB_KEY
+#   - 개인키 data/id_ed25519 는 절대 밖으로 내보내지 않는다.
+# 운영(Lightsail 등): RELAY_HOST=<공인 IP 또는 도메인> docker compose up -d
+#   - 열 포트: TCP 21115-21117, UDP 21116
+services:
+  hbbs:
+    container_name: taesan-hbbs
+    image: rustdesk/rustdesk-server:1.1.14
+    command: hbbs -r ${RELAY_HOST:-127.0.0.1}:21117 -k _
+    volumes:
+      - ./data:/root
+    ports:
+      - "21115:21115"
+      - "21116:21116"
+      - "21116:21116/udp"
+    restart: unless-stopped
+    depends_on:
+      - hbbr
+
+  hbbr:
+    container_name: taesan-hbbr
+    image: rustdesk/rustdesk-server:1.1.14
+    command: hbbr -k _
+    volumes:
+      - ./data:/root
+    ports:
+      - "21117:21117"
+    restart: unless-stopped
