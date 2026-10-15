@@ -1,0 +1,749 @@
+/* Taesan(DSK-07): 32비트 Windows 수신 전용(Sciter) 화면 — Flutter 수신 전용과 같은 어드민 톤(taesan.tis 참고).
+   색 정본 flutter/lib/common/taesan_theme.dart (Tailwind v4 neutral 등):
+   n100 #F5F5F5 · n200 #E5E5E5 · n300 #D4D4D4 · n400 #A1A1A1 · n500 #737373 · n600 #525252 · n900 #171717
+   red500 #FB2C36 · red600 #E40014 · green500 #00C758 · green600 #00A544 · amber500 #F99C00
+   구분선 #E7E7E7 = Flutter Divider(#1F000000)를 n100 위에 그린 색.
+   2026-10-15(부록 A-27): 파랑(blue600) 강조를 검정(n900)으로 — 링크는 본문색 + 밑줄, 켜진 타일·말풍선·탭 밑줄은 검정. */
+
+/* ---------------------------------------------------------------- 메인 창(수신 전용) */
+
+html.taesan-incoming {
+    background: #F5F5F5;
+}
+
+html.taesan-incoming body {
+    border: #D4D4D4 solid 1px;
+    font-family: "Segoe UI", "Malgun Gothic";
+}
+
+div.taesan-home {
+    flow: vertical;
+    width: *;
+    height: max-content;
+    background: #F5F5F5;
+    color: #171717;
+    font-size: 14px;
+    position: relative;
+}
+
+/* 제목 표시줄 40(구분선 포함) — 앱 아이콘 16, 창 버튼 39×39 · 아이콘 12 */
+div.taesan-titlebar {
+    flow: horizontal;
+    height: 39px;
+    border-bottom: #E7E7E7 solid 1px;
+}
+
+div.taesan-caption {
+    width: *;
+    height: *;
+}
+
+icon.taesan-appicon {
+    display: block;
+    size: 16px;
+    margin-left: 5px;
+    margin-top: *;
+    margin-bottom: *;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+div.taesan-winbtn {
+    width: 39px;
+    height: 39px;
+}
+
+div.taesan-winbtn svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin: 13px 0 0 13px;
+    stroke: #525252;
+}
+
+div.taesan-winbtn:hover {
+    background: rgba(255, 255, 255, 0.54);
+}
+
+div.taesan-winbtn.disabled svg {
+    stroke: rgba(0, 0, 0, 0.38);
+}
+
+div.taesan-winbtn.disabled:hover {
+    background: transparent;
+}
+
+div#taesan-close:hover {
+    background: #C42B1C;
+}
+
+div#taesan-close:hover svg {
+    stroke: white;
+}
+
+div.taesan-pane {
+    width: 280px;
+    flow: vertical;
+}
+
+/* '내 데스크탑' 19 + 안내 12 — 여백 위 16 · 왼쪽 20 · 오른쪽 16 · 아래 5 */
+div.taesan-tip {
+    padding: 16px 16px 5px 20px;
+}
+
+div.taesan-title {
+    font-size: 19px;
+    line-height: 24px;
+}
+
+div.taesan-desk-tip {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 15px;
+}
+
+/* ID·비밀번호 보드: 2px 파란 막대 + 이름(14, n900 50%) + 값 */
+div.taesan-board {
+    flow: horizontal;
+}
+
+div.taesan-bar {
+    width: 2px;
+    height: 52px;
+    background: #171717;
+}
+
+div.taesan-board-body {
+    width: *;
+    padding-left: 7px;
+}
+
+div.taesan-label {
+    font-size: 14px;
+    line-height: 18px;
+    color: rgba(23, 23, 23, 0.5);
+}
+
+div.taesan-id {
+    height: 57px;
+    margin: 0 11px 0 20px;
+}
+
+div.taesan-id div.taesan-bar {
+    margin-top: 5px;
+}
+
+div.taesan-id div.taesan-label {
+    margin-top: 5px;
+    height: 20px;
+}
+
+div.taesan-id-value {
+    font-size: 22px;
+    line-height: 28px;
+    margin-top: 4px;
+    color: #212121;
+}
+
+div.taesan-pw {
+    margin: 13px 16px 13px 20px;
+}
+
+div.taesan-pw-row {
+    flow: horizontal;
+}
+
+div.taesan-pw-value {
+    width: *;
+    font-size: 15px;
+    line-height: 19px;
+    margin-top: 10px;
+    color: #212121;
+}
+
+div.taesan-refresh {
+    size: 22px;
+    margin: 9px 8px 0 0;
+    cursor: pointer;
+}
+
+div.taesan-refresh svg {
+    size: 22px;
+    stroke: #A1A1A1;
+    transform: rotate(180deg);
+}
+
+div.taesan-refresh:hover svg {
+    stroke: #171717;
+}
+
+/* '종료': 테두리 버튼(흰 바탕·n300 테두리·반경 8·높이 32), 오른쪽 정렬, 바깥 여백 14 */
+div.taesan-quit-row {
+    margin: 27px 14px 14px 14px; /* 위 = 비밀번호 보드 아래 13 + 14(Sciter 는 세로 여백이 겹친다) */
+    text-align: right;
+}
+
+button.taesan-btn-outline {
+    box-sizing: border-box;
+    height: 32px;
+    min-width: 64px;
+    padding: 0 16px;
+    border: #D4D4D4 solid 1px;
+    border-radius: 8px;
+    background: white;
+    color: #171717;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+button.taesan-btn-outline:hover {
+    background: #F3F3F3;
+}
+
+button.taesan-btn-outline:active {
+    background: #E8E8E8;
+}
+
+/* D35: 오픈소스 고지·Sciter 표기 — 작은 회색 밑줄 링크(Flutter loadPowered: 9px·불투명도 0.5) */
+div.taesan-legal {
+    margin: 4px 14px 10px 14px;
+    text-align: center;
+}
+
+div.taesan-legal-link {
+    font-size: 10px;
+    color: #737373;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 2px;
+}
+
+/* 설치·업그레이드 카드: n900 바탕·흰 글자, 흰 테두리 버튼 150 */
+div.taesan-card {
+    margin: 20px 0;
+    padding: 20px;
+    background: #171717;
+    color: white;
+}
+
+div.taesan-card-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+div.taesan-card-text {
+    font-size: 13px;
+    line-height: 20px;
+}
+
+div.taesan-card-btns {
+    margin-top: 20px;
+    text-align: center;
+}
+
+button.taesan-card-btn {
+    width: 150px;
+    height: 34px;
+    border: white solid 1px;
+    border-radius: 8px;
+    background: transparent;
+    color: white;
+    font-size: 14px;
+}
+
+button.taesan-card-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+/* 상태 줄: 구분선(Flutter Divider 높이 16) + 점 8(좌우 14) + 문구 14(폭 226), 아래 6 */
+div.taesan-status {
+    margin-top: 7px;
+    border-top: #E7E7E7 solid 1px;
+    padding: 8px 6px 8px 0;
+}
+
+div.taesan-status-row {
+    flow: horizontal;
+}
+
+span.taesan-dot {
+    display: block;
+    size: 8px;
+    border-radius: 4px;
+    margin: 0 14px;
+    margin-top: 5px;
+}
+
+span.taesan-dot-wait {
+    background: #F99C00;
+}
+
+span.taesan-dot-ready {
+    background: #00C758;
+}
+
+span.taesan-dot-error {
+    background: #FB2C36;
+}
+
+div.taesan-status-text {
+    width: 226px;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+div.taesan-start-service {
+    margin: 2px 0 0 36px;
+    color: #171717;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+div.taesan-toast {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    width: max-content;
+    margin: 0 *;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(23, 23, 23, 0.85);
+    color: white;
+    font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- 연결 관리(CM) 창 (flutter/lib/desktop/pages/server_page.dart) */
+
+html.taesan-cm {
+    border: #D4D4D4 solid 1px !important; /* common.tis adjustBorder() 의 검정 테두리 대신 */
+    background: #F5F5F5;
+}
+
+html.taesan-cm body {
+    background: #F5F5F5;
+    color: #171717;
+    font-family: "Segoe UI", "Malgun Gothic";
+    font-size: 14px;
+}
+
+/* 탭 막대 40: 앱 아이콘 16, 탭(이름 최대 100, 선택 = 흰색 54% + 파란 밑줄 1px), 최소화 39×39 */
+html.taesan-cm header {
+    height: 40px;
+    background: #F5F5F5;
+}
+
+html.taesan-cm header div.window-icon {
+    width: 26px;
+    height: 40px;
+}
+
+html.taesan-cm div.border-bottom {
+    background: #E7E7E7;
+}
+
+html.taesan-cm header .window-toolbar {
+    left: 26px;
+    top: 0;
+    bottom: auto;
+    height: 40px;
+    width: max-content;
+}
+
+html.taesan-cm div.tabs > div {
+    height: 39px;
+    line-height: 39px;
+}
+
+html.taesan-cm div.tab {
+    width: 100px; /* + 좌우 10 = cm.tis adjustHeader() 의 탭 폭 120 */
+    padding: 0 10px;
+    color: #737373;
+    font-weight: normal;
+}
+
+html.taesan-cm div.active-tab {
+    background: rgba(255, 255, 255, 0.54);
+    border: none;
+    border-bottom: #171717 solid 1px;
+    color: #171717;
+}
+
+html.taesan-cm span.unreaded {
+    size: 16px;
+    border-radius: 8px;
+    line-height: 16px;
+    text-align: center;
+    background: #FB2C36;
+}
+
+html.taesan-cm div.tab-arrows {
+    background: #F5F5F5;
+}
+
+html.taesan-cm button.window {
+    width: 39px;
+    height: 39px;
+    padding: 0;
+}
+
+html.taesan-cm button.window#minimize div {
+    width: 12px;
+    height: 0;
+    border: none;
+    border-bottom: #525252 solid 1px;
+    margin: *;
+}
+
+html.taesan-cm button.window:hover {
+    background: rgba(255, 255, 255, 0.54);
+}
+
+div.taesan-cm-waiting {
+    size: *;
+    margin: * 0;
+    text-align: center;
+}
+
+/* 본문: 위아래 4 · 좌우 8 */
+html.taesan-cm div.left-panel.taesan-cm-panel {
+    flow: vertical;
+    padding: 4px 8px;
+    border-spacing: 0;
+    background: #F5F5F5;
+    overflow-x: hidden;
+}
+
+div.taesan-cm-header {
+    flow: horizontal;
+    margin: 10px 5px;
+    padding: 10px 5px 10px 10px;
+    border-radius: 8px;
+    background: #171717;
+    color: white;
+}
+
+.taesan-cm-avatar {
+    size: 70px;
+    border-radius: 15px;
+    margin-right: 10px;
+}
+
+div.taesan-cm-avatar {
+    text-align: center;
+    font-size: 55px;
+    line-height: 70px;
+    font-weight: bold;
+    color: white;
+}
+
+div.taesan-cm-who {
+    width: *;
+    overflow-x: hidden;
+}
+
+div.taesan-cm-name {
+    font-size: 20px;
+    line-height: 25px;
+    font-weight: bold;
+    @ELLIPSIS;
+}
+
+div.taesan-cm-peer {
+    font-size: 14px;
+    line-height: 18px;
+}
+
+div.taesan-cm-kind {
+    font-size: 12px;
+    line-height: 16px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+div.taesan-cm-state {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+
+html.taesan-cm div.taesan-cm-header div.chaticon {
+    position: static;
+    size: 24px;
+    background: transparent;
+    cursor: pointer;
+}
+
+html.taesan-cm div.taesan-cm-header div.chaticon svg {
+    size: 20px;
+    margin: 2px;
+    opacity: 1;
+    stroke: white;
+}
+
+/* 권한 보드: 높이 160, 여백 5, 반경 10, 그림자 */
+div.taesan-perm-board {
+    height: 160px;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 10px;
+    background: #F5F5F5;
+    box-shadow: 0 1.5px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
+div.taesan-perm-title {
+    text-align: center;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+div.taesan-perm-grid {
+    flow: horizontal-flow;
+    border-spacing: 10px;
+    padding: 0 10px;
+}
+
+html.taesan-cm icon.taesan-tile {
+    display: block;
+    size: 53px;
+    border-radius: 8px;
+    background: #525252;
+    cursor: pointer;
+}
+
+html.taesan-cm icon.taesan-tile.on {
+    background: #171717;
+}
+
+html.taesan-cm icon.taesan-tile.on.locked {
+    background: rgba(23, 23, 23, 0.6);
+}
+
+html.taesan-cm icon.taesan-tile.locked {
+    cursor: default;
+}
+
+/* 아이콘 가운데: (53 - 24) / 2. svg 에 margin: * 를 쓰면 Sciter 가 제자리에 그리지 않는다. */
+html.taesan-cm icon.taesan-tile svg {
+    display: block;
+    size: 24px;
+    margin: 14.5px 0 0 14.5px;
+    stroke: white;
+}
+
+div.taesan-cm-spacer {
+    size: *;
+}
+
+/* 버튼: 높이 32·반경 8·바깥 여백 4, 아이콘 14 + 5 */
+div.taesan-cm-buttons {
+    margin-bottom: 8px;
+}
+
+div.taesan-cm-row {
+    flow: horizontal;
+}
+
+html.taesan-cm button.taesan-cm-btn {
+    display: block;
+    flow: horizontal;
+    width: *;
+    height: 32px;
+    margin: 4px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    color: white;
+    background: #171717 !important; /* cm.css 의 button#disconnect 등 id 규칙보다 먼저 */
+}
+
+span.taesan-btn-in {
+    display: block;
+    flow: horizontal;
+    margin: *;
+}
+
+span.taesan-btn-in > svg {
+    display: block;
+    size: 14px;
+    margin: 2px 5px 0 0;
+    stroke: white;
+}
+
+span.taesan-btn-in > span {
+    display: block;
+    line-height: 18px;
+}
+
+html.taesan-cm button.taesan-cm-btn.danger {
+    background: #E40014 !important;
+}
+
+html.taesan-cm button.taesan-cm-btn.success {
+    background: #00A544 !important;
+}
+
+html.taesan-cm button.taesan-cm-btn.outline {
+    background: transparent !important;
+    border: #D4D4D4 solid 1px;
+    color: #171717;
+}
+
+html.taesan-cm button.taesan-cm-btn:hover {
+    opacity: 0.9;
+}
+
+html.taesan-cm button.taesan-cm-btn:active {
+    opacity: 0.75;
+}
+
+/* 채팅(왼쪽 패널 옆): 입력 칸 n100·n300 테두리·반경 8, 보내기 파랑, 내 말풍선 파랑·상대 n600 */
+html.taesan-cm div.right-panel {
+    background: white;
+    border-left: #E5E5E5 solid 1px;
+}
+
+html.taesan-cm div.chatbox .msgs {
+    border-bottom: none;
+    background: white;
+}
+
+html.taesan-cm div.chatbox div.name {
+    color: #737373;
+    font-size: 11px;
+}
+
+html.taesan-cm div.chatbox div.text {
+    display: inline-block;
+    max-width: 80%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #525252;
+    color: white;
+}
+
+html.taesan-cm div.chatbox div.right-side div.text {
+    background: #171717;
+}
+
+html.taesan-cm div.chatbox div.send {
+    height: 32px;
+    padding: 8px;
+}
+
+html.taesan-cm div.chatbox div.send input {
+    height: 30px !important;
+    font-size: 14px;
+    border: #D4D4D4 solid 1px;
+    border-radius: 8px;
+    background: #F5F5F5;
+}
+
+html.taesan-cm div.chatbox div.send svg {
+    fill: #171717;
+}
+
+/* ---------------------------------------------------------------- 설치 화면 (flutter/lib/desktop/pages/install_page.dart, em = 13) */
+
+div.content.taesan-install {
+    background: #F5F5F5;
+    padding: 39px 52px;
+    border-spacing: 0;
+    color: #171717;
+    font-family: "Segoe UI", "Malgun Gothic";
+    font-size: 14px;
+}
+
+div.taesan-install-title {
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 600;
+}
+
+div.taesan-install-path {
+    flow: horizontal;
+    margin: 26px 0;
+}
+
+div.taesan-install-label {
+    margin: * 10px * 0;
+}
+
+div.taesan-install-path input {
+    width: *;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 14px;
+    border: #D4D4D4 solid 1px;
+    border-radius: 8px;
+    background: #F5F5F5;
+    color: #171717;
+}
+
+div.taesan-install-opt {
+    margin-bottom: 7px;
+}
+
+div.taesan-install-note {
+    flow: horizontal;
+    margin: 26px 0;
+    padding: 12px;
+    border: #D4D4D4 solid 1px;
+    border-radius: 8px;
+    background: white;
+}
+
+div.taesan-install-note > svg {
+    display: block;
+    size: 32px;
+    margin: 0 16px 0 0;
+    stroke: #171717;
+}
+
+div.taesan-link {
+    margin-top: 13px;
+    color: #171717;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+div.taesan-install-actions {
+    flow: horizontal;
+    border-spacing: 10px;
+}
+
+div.taesan-install-progress {
+    width: *;
+}
+
+div.taesan-install-progress progress {
+    width: *;
+    margin-top: 14px;
+}
+
+button.taesan-btn-primary {
+    box-sizing: border-box;
+    height: 32px;
+    min-width: 64px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    background: #171717;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+button.taesan-btn-primary:hover {
+    background: #3A3A3A;
+}
+
+button.taesan-btn-primary:disabled,
+button.taesan-btn-outline:disabled {
+    opacity: 0.4;
+}

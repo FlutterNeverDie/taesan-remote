@@ -1,0 +1,168 @@
+# 태산 원격지원 — Inno Setup 표준 인스톨러 빌드.
+# 자기추출 packer 대신 흔한 Inno 인스톨러(taesan-setup-x.x.x-x86_64.exe)를 만든다.
+# 인스톨러가 Program Files 복사 + 제어판 등록 + 시작메뉴를 담당하고, RustDesk 고유
+# 서비스/방화벽 등록은 앱의 --after-install 로 위임한다(res/inno/taesan.iss 참고).
+# 미서명 상태(향후 코드서명 붙일 자리는 .iss 의 SignTool 주석 참고).
+# 변형(DSK-01): variant=incoming 이면 수신 전용 빌드(taesan-setup-x.x.x-x86_64-incoming.exe).
+# Secret TAESAN_INCOMING_PASSWORD 와 variable TAESAN_INCOMING_SALT 로 공통 영구 비밀번호
+# 해시를 만들어 넣는다(없으면 build.rs 가 멈춘다). AppId·설치 경로·서비스 이름은 두 변형이 같다.
+
+name: Taesan Windows Inno installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "빌드 변형: bidirectional(양방향) / incoming(수신 전용)"
+        type: choice
+        options:
+          - bidirectional
+          - incoming
+        default: bidirectional
+
+env:
+  TAESAN_VARIANT: ${{ inputs.variant }}
+  VARIANT_SUFFIX: ${{ inputs.variant == 'incoming' && '-incoming' || '' }}
+  SCITER_RUST_VERSION: "1.75"
+  FLUTTER_VERSION: "3.24.5"
+  LLVM_VERSION: "15.0.6"
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
+  VERSION: "1.4.8"
+
+jobs:
+  generate-bridge:
+    uses: ./.github/workflows/bridge.yml
+
+  build-windows-inno:
+    needs: [generate-bridge]
+    name: build taesan windows inno (x86_64)
+    runs-on: windows-2022
+    steps:
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Checkout source code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: bridge-artifact
+          path: ./
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@ebc0426251bc40c7cd31162802432c68818ab8f0 # v2.0.9
+        with:
+          version: ${{ env.LLVM_VERSION }}
+
+      - name: Install flutter
+        id: flutter
+        uses: subosito/flutter-action@2783a3f08e1baf891508463f8c6653c258246225 # v2.12.0
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          architecture: x64
+
+      - name: Replace engine with rustdesk custom flutter engine
+        run: |
+          flutter doctor -v
+          flutter precache --windows
+          Invoke-WebRequest -Uri https://github.com/rustdesk/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
+          Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
+          mv -Force windows-x64-release/*  C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release/
+
+      - name: Patch flutter
+        shell: bash
+        run: |
+          cp .github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff $(dirname $(dirname $(which flutter)))
+          cd $(dirname $(dirname $(which flutter)))
+          [[ "3.24.5" == ${{env.FLUTTER_VERSION}} ]] && git apply flutter_3.24.4_dropdown_menu_enableFilter.diff
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ env.SCITER_RUST_VERSION }}
+          targets: x86_64-pc-windows-msvc
+          components: "rustfmt"
+
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          prefix-key: windows-2022-taesan-nsistest
+
+      - name: Setup vcpkg with Github Actions binary cache
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgDirectory: C:\vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg dependencies
+        env:
+          VCPKG_DEFAULT_HOST_TRIPLET: x64-windows-static
+        shell: bash
+        run: |
+          if ! $VCPKG_ROOT/vcpkg install --triplet x64-windows-static --x-install-root="$VCPKG_ROOT/installed"; then
+            find "${VCPKG_ROOT}/" -name "*.log" -exec cat {} \; ; exit 1
+          fi
+
+      - name: Compute incoming-only password hash
+        if: ${{ inputs.variant == 'incoming' }}
+        env:
+          TAESAN_INCOMING_PASSWORD: ${{ secrets.TAESAN_INCOMING_PASSWORD }}
+          TAESAN_INCOMING_SALT: ${{ vars.TAESAN_INCOMING_SALT }}
+          PYTHONUTF8: "1"
+        run: |
+          # 평문은 이 스텝에서만 쓰고 해시·솔트만 다음 스텝에 넘긴다. 값은 로그에서 가린다.
+          $out = python3 res/taesan-variant/preset_hash.py
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          foreach ($line in $out) {
+            Write-Output "::add-mask::$($line.Split('=', 2)[1])"
+            Add-Content -Path $env:GITHUB_ENV -Value $line
+          }
+
+      - name: Apply incoming-only icons
+        if: ${{ inputs.variant == 'incoming' }}
+        env:
+          PYTHONUTF8: "1"
+        run: |
+          # 오른쪽 위 ↓ 배지 아이콘(DSK-10, exe·설치 파일·창 아이콘). build.rs 가 덮어썼는지 확인한다.
+          python3 res/taesan-variant/apply_icons.py
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Build rustdesk
+        env:
+          TAESAN_PRESET_PASSWORD: ${{ secrets.TAESAN_PRESET_PASSWORD }}
+        run: |
+          python3 .\build.py --portable --flutter --skip-portable-pack --hwcodec --vram
+          mv ./flutter/build/windows/x64/runner/Release ./rustdesk
+
+      - name: Package with Inno Setup (표준 인스톨러)
+        shell: bash
+        run: |
+          mkdir -p ./SignOutput
+          ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          if [ ! -f "$ISCC" ]; then
+            echo "Inno Setup 미설치 → choco 설치"
+            choco install innosetup -y --no-progress
+          fi
+          # 경로 이스케이프 회피: flutter 산출물을 .iss 옆에 복사하고 상대경로 기본값(rustdesk) 사용.
+          cp -r ./rustdesk ./res/inno/rustdesk
+          SUFFIX_ARG=()
+          [ -n "$VARIANT_SUFFIX" ] && SUFFIX_ARG=("//DMyVariantSuffix=$VARIANT_SUFFIX")
+          "$ISCC" //DMyAppVersion=${{ env.VERSION }} "${SUFFIX_ARG[@]}" res/inno/taesan.iss
+          find ./res/inno -name "taesan-setup-*.exe" -exec mv {} ./SignOutput/ \;
+          ls -la ./SignOutput
+
+      - name: Upload Inno installer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: taesan-${{ env.VERSION }}-windows-x64-inno-setup${{ env.VARIANT_SUFFIX }}
+          path: ./SignOutput/*.exe
+          if-no-files-found: error

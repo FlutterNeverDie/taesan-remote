@@ -1,0 +1,251 @@
+# 태산 원격지원 — Android 유니버설 APK 빌드 (슬림)
+# 목적: arm64-v8a(64비트) + armeabi-v7a(32비트)를 한 APK에 담아 Android 7 등 32비트
+#       기기까지 설치 지원(arm64 전용은 32비트 기기에서 INSTALL_FAILED_NO_MATCHING_ABIS).
+# 트리거: 수동(workflow_dispatch). 서명키 없이 debug 서명 apk 생성(설치 가능).
+# 원본 build-rustdesk-android 잡(flutter-build.yml)에서 x86 계열만 빼고 ARM 2종을 빌드,
+# 아티팩트 업로드를 '무조건'으로 바꿈.
+# 변형(DSK-01): variant=incoming 이면 수신 전용 빌드. Secret TAESAN_INCOMING_PASSWORD 와
+# variable TAESAN_INCOMING_SALT 로 공통 영구 비밀번호 해시를 만들어 넣는다(없으면 build.rs 가 멈춘다).
+
+name: Taesan Android (slim)
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "빌드 변형: bidirectional(양방향) / incoming(수신 전용)"
+        type: choice
+        options:
+          - bidirectional
+          - incoming
+        default: bidirectional
+
+env:
+  TAESAN_VARIANT: ${{ inputs.variant }}
+  VARIANT_SUFFIX: ${{ inputs.variant == 'incoming' && '-incoming' || '' }}
+  RUST_VERSION: "1.75"
+  CARGO_NDK_VERSION: "3.1.2"
+  ANDROID_FLUTTER_VERSION: "3.24.5"
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
+  VERSION: "1.4.8"
+  NDK_VERSION: "r28c"
+
+jobs:
+  generate-bridge:
+    uses: ./.github/workflows/bridge.yml
+
+  build-android:
+    needs: [generate-bridge]
+    name: build taesan android apk ${{ matrix.job.target }}
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - {
+              arch: aarch64,
+              target: aarch64-linux-android,
+              os: ubuntu-24.04,
+              reltype: release,
+              suffix: "",
+            }
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        with:
+          tool-cache: false
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: false
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+               clang \
+               cmake \
+               curl \
+               gcc-multilib \
+               git \
+               g++ \
+               g++-multilib \
+               libayatana-appindicator3-dev \
+               libasound2-dev \
+               libc6-dev \
+               libclang-dev \
+               libunwind-dev \
+               libgstreamer1.0-dev \
+               libgstreamer-plugins-base1.0-dev \
+               libgtk-3-dev \
+               libpam0g-dev \
+               libpulse-dev \
+               libva-dev \
+               libxcb-randr0-dev \
+               libxcb-shape0-dev \
+               libxcb-xfixes0-dev \
+               libxdo-dev \
+               libxfixes-dev \
+               llvm-dev \
+               nasm \
+               ninja-build \
+               openjdk-17-jdk-headless \
+               pkg-config \
+               tree \
+               wget
+
+      - name: Checkout source code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - name: Install flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.ANDROID_FLUTTER_VERSION }}
+
+      - name: Patch flutter
+        run: |
+          cd $(dirname $(dirname $(which flutter)))
+          [[ "3.24.5" == ${{env.ANDROID_FLUTTER_VERSION}} ]] && git apply ${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff
+
+      - uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1
+        id: setup-ndk
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+          add-to-path: true
+
+      - name: Setup vcpkg with Github Actions binary cache
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgDirectory: /opt/artifacts/vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg dependencies (arm64-v8a)
+        # 주의: armeabi-v7a(arm-neon-android) 의존성은 여기서 같이 설치하면 안 된다.
+        # 같은 --x-install-root 에 두 triplet 을 순차 설치하면 vcpkg manifest 모드가
+        # install-root 를 마지막 요청 집합에 맞춰 정리하며 arm64-android 패키지를 제거해버려
+        # 이후 arm64 rust(hwcodec) 빌드가 ffmpeg 헤더를 못 찾는다. 그래서 armeabi-v7a deps 는
+        # "Build rustdesk lib" 스텝에서 arm64 rust 빌드가 끝난 뒤에 설치한다(순서 인터리빙).
+        run: |
+          if ! ./flutter/build_android_deps.sh "arm64-v8a"; then
+            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+              echo "$_1:"
+              echo "======"
+              cat "$_1"
+              echo "======"
+              echo ""
+            done
+            exit 1
+          fi
+        shell: bash
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: bridge-artifact
+          path: ./
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: "rustfmt"
+
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          prefix-key: rustdesk-lib-cache-android
+          key: ${{ matrix.job.target }}
+
+      - name: Compute incoming-only password hash
+        if: ${{ inputs.variant == 'incoming' }}
+        shell: bash
+        env:
+          TAESAN_INCOMING_PASSWORD: ${{ secrets.TAESAN_INCOMING_PASSWORD }}
+          TAESAN_INCOMING_SALT: ${{ vars.TAESAN_INCOMING_SALT }}
+        run: |
+          # 평문은 이 스텝에서만 쓰고 해시·솔트만 다음 스텝에 넘긴다. 값은 로그에서 가린다.
+          out="$(python3 res/taesan-variant/preset_hash.py)"
+          while IFS= read -r line; do
+            echo "::add-mask::${line#*=}"
+            echo "$line" >> "$GITHUB_ENV"
+          done <<< "$out"
+
+      - name: Apply incoming-only icons
+        if: ${{ inputs.variant == 'incoming' }}
+        shell: bash
+        run: |
+          # 오른쪽 위 ↓ 배지 아이콘(DSK-10). build.rs 가 덮어썼는지 확인한다.
+          python3 res/taesan-variant/apply_icons.py
+
+      - name: Build rustdesk lib
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
+          TAESAN_PRESET_PASSWORD: ${{ secrets.TAESAN_PRESET_PASSWORD }}
+        run: |
+          rustup target add aarch64-linux-android armv7-linux-androideabi
+          cargo install cargo-ndk --version ${{ env.CARGO_NDK_VERSION }} --locked
+
+          # --- arm64-v8a: vcpkg(arm64-android)는 이전 스텝에서 설치됨 → 바로 rust 빌드 ---
+          ./flutter/ndk_arm64.sh
+          mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
+          cp ./target/aarch64-linux-android/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
+
+          # --- armeabi-v7a: 이제 vcpkg 를 armeabi-v7a(arm-neon-android→arm-android)로 설치.
+          # 이 설치가 같은 install-root 의 arm64-android 패키지를 제거하지만, arm64 rust 빌드는
+          # 위에서 이미 끝났으므로 무해하다(순서 인터리빙이 핵심). 그 뒤 armv7 rust 빌드. ---
+          if ! ./flutter/build_android_deps.sh "armeabi-v7a"; then
+            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+              echo "$_1:"
+              echo "======"
+              cat "$_1"
+              echo "======"
+              echo ""
+            done
+            exit 1
+          fi
+          ./flutter/ndk_arm.sh
+          mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
+          cp ./target/armv7-linux-androideabi/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
+
+      - name: Build rustdesk apk
+        shell: bash
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          export PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+          sed -i "s/org.gradle.jvmargs=-Xmx1024M/org.gradle.jvmargs=-Xmx2g/g" ./flutter/android/gradle.properties
+          # 서명키 없이 빌드: release 서명 대신 debug 서명 사용
+          sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
+          # 32비트(armeabi-v7a)+64비트(arm64-v8a) 네이티브 라이브러리 모두 배치 → 유니버설 APK
+          mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a ./flutter/android/app/src/main/jniLibs/armeabi-v7a
+          cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
+          cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
+          cp ./target/aarch64-linux-android/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
+          cp ./target/armv7-linux-androideabi/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
+          pushd flutter
+          flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm,android-arm64
+          mv build/app/outputs/flutter-apk/app-${{ matrix.job.reltype }}.apk ../taesan-${{ env.VERSION }}-android${{ env.VARIANT_SUFFIX }}.apk
+          popd
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: taesan-${{ env.VERSION }}-android${{ env.VARIANT_SUFFIX }}-apk
+          path: ./taesan-${{ env.VERSION }}-android${{ env.VARIANT_SUFFIX }}.apk
+          if-no-files-found: error

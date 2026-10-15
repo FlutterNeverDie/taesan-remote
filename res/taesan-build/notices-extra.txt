@@ -1,0 +1,81 @@
+# Taesan(D35): 자동 수집(cargo-about·Flutter NOTICES·vcpkg copyright)으로 잡히지 않는 고지.
+# 형식: '## platforms: <이름...>' 줄 아래가 그 플랫폼 묶음이다(all = 모든 플랫폼). '#' 로 시작하는 맨 앞 줄들은 주석.
+
+## platforms: all
+----------------------------------------------------------------------------------------------------
+Lucide icons (ISC) and Feather icons (MIT)
+Used through the Flutter package lucide_icons_flutter (its own MIT license is listed in the Flutter section)
+and as inline SVG in the 32-bit Windows (Sciter) UI.
+
+Lucide icons above: https://github.com/lucide-icons/lucide (lucide-static 1.46.0)
+
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+The icons minus, square, x, upload, info, circle-alert and triangle-alert are derived from the Feather project:
+
+The MIT License (MIT)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----------------------------------------------------------------------------------------------------
+libjpeg-turbo / mozjpeg (IJG)
+This software is based in part on the work of the Independent JPEG Group.
+
+----------------------------------------------------------------------------------------------------
+default_net (https://github.com/rustdesk-org/default_net)
+Git dependency of libs/hbb_common maintained by the RustDesk organization. The repository carries no
+license file or license field; it is distributed here as part of RustDesk.
+
+## platforms: macos android
+----------------------------------------------------------------------------------------------------
+FFmpeg 7.1 (https://ffmpeg.org/) — built as LGPL-2.1-or-later (no --enable-gpl, no --enable-nonfree).
+Build configuration: res/vcpkg/ffmpeg/portfile.cmake in the source tree of this release
+(upstream tag n7.1, vcpkg overlay port). The FFmpeg source code is available from https://ffmpeg.org/
+and from the same release tag of this program's source repository (build recipe).
+
+## platforms: windows-x64 windows-x86
+----------------------------------------------------------------------------------------------------
+FFmpeg 7.1 (https://ffmpeg.org/) — built with --enable-gpl, therefore distributed under GPL-2.0-or-later
+(compatible with this program's AGPL-3.0). No --enable-nonfree.
+Build configuration: res/vcpkg/ffmpeg/portfile.cmake in the source tree of this release
+(upstream tag n7.1, vcpkg overlay port). The FFmpeg source code is available from https://ffmpeg.org/
+and from the same release tag of this program's source repository (build recipe).
+
+## platforms: windows-x86
+----------------------------------------------------------------------------------------------------
+Sciter Engine
+This Application uses Sciter Engine (http://sciter.com/), copyright Terra Informatica Software, Inc.
+sciter.dll is distributed in binary form under the Sciter free license
+(https://github.com/c-smile/sciter-sdk/blob/master/license.htm).

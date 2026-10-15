@@ -1,0 +1,11 @@
+﻿태산 원격지원 — 오픈소스 고지
+
+이 프로그램은 RustDesk(© Purslane Ltd. 및 기여자)의 수정본이며,
+GNU Affero General Public License 3.0(AGPL-3.0)에 따라 배포합니다.
+이 프로그램은 어떠한 보증도 없이 제공됩니다.
+
+- 라이선스 전문: 설치 폴더의 LICENCE.txt
+- 수정 사실: 설치 폴더의 NOTICE.txt
+- 제3자 라이선스: 설치 폴더의 THIRD_PARTY_NOTICES.txt
+- 소스 코드: oasa741@gmail.com 으로 요청하면 제공합니다.
+- 이 프로그램은 지정한 중계 서버 외에 기기 정보를 보내지 않습니다.

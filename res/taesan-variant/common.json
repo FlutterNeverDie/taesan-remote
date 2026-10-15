@@ -1,0 +1,6 @@
+{
+  "override-settings": {
+    "floating-window-transparency": "0",
+    "floating-window-untouchable": "Y"
+  }
+}

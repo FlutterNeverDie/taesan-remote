@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">태산 원격지원</string>
+    <string name="accessibility_service_description">태산 원격지원 화면 공유가 설정되면, 다른 기기가 가상 터치로 이 기기를 제어할 수 있도록 허용합니다</string>
+</resources>

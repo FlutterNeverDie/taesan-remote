@@ -1,0 +1,27 @@
+<html>
+
+<head>
+    <style>
+        @import url(common.css);
+        @import url(index.css);
+        @import url(taesan.css);
+    </style>
+    <script type="text/tiscript">
+            include "common.tis";
+    </script>
+    <!-- Taesan(DSK-07): taesan.tis is a separate script block (own compile unit). Inlined into one unit,
+         index.tis + taesan.tis exceed the TIScript code size limit ("Bad parse code"). It needs Reactor from common.tis. -->
+    <script type="text/tiscript">
+            include "taesan.tis";
+    </script>
+    <script type="text/tiscript">
+            include "msgbox.tis";
+            include "ab.tis";
+            include "index.tis";
+        </script>
+</head>
+
+<body>
+</body>
+
+</html>

@@ -1,0 +1,433 @@
+// Taesan(DSK-07): 32비트 Windows 수신 전용은 Flutter 가 없어 이 구 UI(Sciter)로 낸다(명세 F-50, 부록 A-19).
+// 화면은 Flutter 수신 전용 Windows 화면과 같은 어드민 톤으로 그린다.
+// 토큰 정본: flutter/lib/common/taesan_theme.dart, 배치: flutter/lib/desktop/pages/desktop_home_page.dart,
+// 상태 줄: flutter/lib/desktop/pages/connection_page.dart (OnlineStatusWidget).
+// 아이콘: Lucide 1.46.0 (https://lucide.dev — 라이선스는 파일 끝). Flutter 의 lucide_icons_flutter 3.1.20 과 같은 판이다.
+
+var taesan_svg = {
+    minus: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>,
+    square: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>,
+    x: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+    refreshCw: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
+    keyboard: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg>,
+    clipboardList: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>,
+    volume2: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg>,
+    upload: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>,
+    rotateCcw: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>,
+    video: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>,
+    ban: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.929 4.929 19.07 19.071"/></svg>,
+    eyeOff: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>,
+    messageSquare: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg>,
+    arrowLeftRight: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>,
+    unlink: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></svg>,
+    shieldCheck: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>,
+    send: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>,
+    phone: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>,
+    phoneOff: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.1 13.9a14 14 0 0 0 3.732 2.668 1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2 18 18 0 0 1-12.728-5.272"/><path d="M22 2 2 22"/><path d="M4.76 13.582A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 .244.473"/></svg>,
+    reply: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 18v-2a4 4 0 0 0-4-4H4"/><path d="m9 17-5-5 5-5"/></svg>,
+    copy: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>,
+    circleAlert: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
+    info: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
+    triangleAlert: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>,
+    circleCheck: <svg .lucide viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg>
+};
+
+// ---------------------------------------------------------------- 메인 창(수신 전용)
+
+// Flutter 수신 전용 창의 보이는 폭 283(왼쪽 패널 280 + 3) + 좌우 테두리 1px.
+const taesan_home_width = 285;
+
+// 창 틀: Flutter 처럼 제목 표시줄을 직접 그리고, 크기 조절·최대화는 막는다. 높이는 내용에 맞춘다.
+function taesanInitHomeWindow() {
+    view.windowFrame = #solid-with-shadow;
+    view.windowResizable = false;
+    view.windowMaximizable = false;
+    view.windowMinSize = (scaleIt(100), scaleIt(100));
+    // 작업 표시줄은 exe 아이콘(res/icon.ico — 수신 전용은 ↓ 배지)을 쓴다. common.tis 가 넣은 get_icon() 은 제목 표시줄용 W. 다.
+    view.windowIcon = null;
+    self.attributes.addClass("taesan-incoming");
+    taesanFitHomeLoop();
+}
+
+// 상태 문구가 줄바꿈되거나 카드가 바뀌면 높이가 달라진다(Flutter `_updateWindowSize` 와 같은 역할).
+function taesanFitHomeLoop() {
+    self.timer(300ms, function() {
+        taesanFitHome();
+        taesanFitHomeLoop();
+    });
+}
+
+function taesanFitHome() {
+    var root = $(div.taesan-home);
+    if (!root || view.windowState != View.WINDOW_SHOWN) return;
+    var body = $(body);
+    var frame = body.box(#height, #border) - body.box(#height, #padding);
+    var want_h = root.box(#height, #margin) + frame;
+    var want_w = scaleIt(taesan_home_width);
+    var (x, y, w, h) = view.box(#rectw, #border, #screen);
+    var dh = h - want_h;
+    if (w != want_w || dh > 1 || dh < -1) view.move(x, y, want_w, want_h);
+}
+
+function taesanHome() {
+    return <div .taesan-main>
+        <div .taesan-titlebar>
+            <div .taesan-caption role="window-caption">
+                <icon .taesan-appicon style={"background-image: url('" + handler.get_icon() + "')"} />
+            </div>
+            <div .taesan-winbtn role="window-minimize" title={translate('Minimize')}>{taesan_svg.minus}</div>
+            <div .taesan-winbtn .disabled>{taesan_svg.square}</div>
+            <div .taesan-winbtn #taesan-close role="window-close" title={translate('Close')}>{taesan_svg.x}</div>
+        </div>
+        <div .taesan-pane>
+            <div .taesan-tip>
+                <div .taesan-title>{translate('Your Desktop')}</div>
+                <div .taesan-desk-tip>{translate('desk_tip')}</div>
+            </div>
+            <div .taesan-board .taesan-id>
+                <div .taesan-bar />
+                <div .taesan-board-body>
+                    <div .taesan-label>{translate('ID')}</div>
+                    <div .taesan-id-value>{key_confirmed ? formatId(get_id()) : translate("Generating ...")}</div>
+                </div>
+            </div>
+            <TaesanPasswordBoard />
+            {taesanHelpCard()}
+            {taesanLegal()}
+        </div>
+        <div style="position:absolute; left:-10000px; top:-10000px; width:0; height:0; overflow:hidden"><MyIdMenu /></div>
+    </div>;
+}
+// 위 화면 밖 MyIdMenu: 업스트림 상태 갱신(checkConnectStatus 등)이 myIdMenu 를 부르므로 둔다. 설정 진입점(⋮)은 없다 — DSK-02.
+
+// D35(부록 A-25): 원저작물·소스 위치·제3자 고지 링크(Flutter loadPowered 와 같은 문구)와
+// Sciter 무료 라이선스가 요구하는 표기(About 또는 비슷한 곳에 Terra Informatica 링크 — sciter-sdk license.htm).
+// 화면 글자는 ASCII 만 쓴다 — Sciter 가 인라인 HTML 을 시스템 코드페이지(cp949)로 읽어 '©'(UTF-8 C2 A9)가 '짤'로 보였다.
+const TAESAN_OSS_URL = "https://www.gnu.org/licenses/agpl-3.0.html";
+function taesanLegal() {
+    return <div .taesan-legal>
+        <div .taesan-legal-link #taesan-oss>{translate('powered_by_me')}</div>
+        <div .taesan-legal-link #taesan-sciter title="This Application uses Sciter Engine (http://sciter.com/), copyright Terra Informatica Software, Inc.">
+            This application uses Sciter Engine (sciter.com), copyright Terra Informatica Software, Inc.
+        </div>
+    </div>;
+}
+
+// 설치 안 됨 → 어두운 설치 카드, 낮은 버전 → 업그레이드 카드, 그 밖 → 오른쪽 '종료' 버튼(Flutter buildHelpCards).
+function taesanHelpCard() {
+    if (system_error) {
+        return <div .taesan-card><div .taesan-card-text>{system_error}</div></div>;
+    }
+    if (is_win && !disable_installation) {
+        if (!handler.is_installed()) {
+            return <div .taesan-card>
+                <div .taesan-card-text>{translate('install_tip')}</div>
+                <div .taesan-card-btns><button .taesan-card-btn #taesan-install>{translate('Install')}</button></div>
+            </div>;
+        }
+        if (handler.is_installed_lower_version()) {
+            return <div .taesan-card>
+                <div .taesan-card-title>{translate('Status')}</div>
+                <div .taesan-card-text>{translate('Your installation is lower version.')}</div>
+                <div .taesan-card-btns><button .taesan-card-btn #taesan-upgrade>{translate('Click to upgrade')}</button></div>
+            </div>;
+        }
+    }
+    return <div .taesan-quit-row><button .taesan-btn-outline #taesan-quit>{translate('Quit')}</button></div>;
+}
+
+// 업스트림 updatePasswordArea() 가 비밀번호가 바뀔 때 passwordArea.update() 를 부른다.
+class TaesanPasswordBoard: Reactor.Component {
+    function this() {
+        passwordArea = this;
+    }
+
+    function render() {
+        var method = handler.get_option('verification-method');
+        var mode = handler.get_option('approve-mode');
+        var hide_one_time = mode == 'click' || method == 'use-permanent-password';
+        return <div .taesan-board .taesan-pw>
+            <div .taesan-bar />
+            <div .taesan-board-body>
+                <div .taesan-label>{translate('One-time Password')}</div>
+                <div .taesan-pw-row>
+                    <div .taesan-pw-value>{hide_one_time ? "-" : password_cache[0]}</div>
+                    {hide_one_time ? "" : <div .taesan-refresh title={translate('Refresh Password')}>{taesan_svg.refreshCw}</div>}
+                </div>
+            </div>
+        </div>;
+    }
+
+    event click $(div.taesan-refresh) {
+        handler.update_temporary_password();
+        this.update();
+    }
+}
+
+// 상태 줄: 점(중지·연결 중 주황, 준비 초록, 그 밖 빨강) + 문구, 중지면 아래 줄에 '서비스 시작' 링크.
+// 수신 전용에서는 '자신만의 서버를 설정' 링크를 두지 않는다(Flutter 와 같음).
+class TaesanConnectStatus: Reactor.Component {
+    function render() {
+        var dot;
+        var text;
+        if (service_stopped) {
+            dot = "wait";
+            text = translate("Service is not running");
+        } else if (connect_status == 0) {
+            dot = "wait";
+            text = translate("connecting_status");
+        } else if (connect_status == 1) {
+            dot = "ready";
+            text = translate("Ready");
+        } else {
+            dot = "error";
+            text = translate("not_ready_status");
+        }
+        return <div .taesan-status>
+            <div .taesan-status-row>
+                <span class={"taesan-dot taesan-dot-" + dot} />
+                <div .taesan-status-text>{text}</div>
+            </div>
+            {service_stopped ? <div .taesan-start-service>{translate("Start service")}</div> : ""}
+        </div>;
+    }
+
+    event click $(div.taesan-start-service) {
+        handler.set_option("stop-service", "");
+    }
+}
+
+event dblclick $(div.taesan-id-value) {
+    if (!key_confirmed) return;
+    view.clipboard(#put, get_id());
+    taesanToast(translate("Copied"));
+}
+
+event click $(#taesan-install) {
+    handler.goto_install();
+}
+
+event click $(#taesan-upgrade) {
+    handler.update_me("");
+}
+
+event click $(#taesan-quit) {
+    view.close();
+}
+
+event click $(#taesan-oss) {
+    handler.open_url(TAESAN_OSS_URL);
+}
+
+event click $(#taesan-sciter) {
+    handler.open_url("http://sciter.com/");
+}
+
+// Flutter showToast 처럼 아래쪽에 잠깐 띄운다.
+function taesanToast(text) {
+    var old = $(div.taesan-toast);
+    if (old) old.remove();
+    var el = new Element("div", text);
+    el.attributes.addClass("taesan-toast");
+    $(div.taesan-home).append(el);
+    self.timer(2s, function() { if (el.parent) el.remove(); });
+}
+
+// ---------------------------------------------------------------- 연결 관리(CM) 창
+// 배치 정본: flutter/lib/desktop/pages/server_page.dart (_CmHeader, _PrivilegeBoard, _CmControlPanel).
+// 클릭 처리는 cm.tis 의 업스트림 핸들러(icon.keyboard·button#disconnect 등)를 그대로 쓴다 — 선택자를 맞춘다.
+
+function taesanInitCm() {
+    view.windowFrame = #solid-with-shadow;
+    self.attributes.addClass("taesan-cm");
+    taesanCmTimeLoop();
+}
+
+function taesanCmBody(me) {
+    if (connections.length == 0) return <div .taesan-cm-waiting>{translate('Waiting')}</div>;
+    var c = connections[me.cur];
+    me.connection = c;
+    me.cid = c.id;
+    var auth = c.authorized;
+    var disconnected = c.disconnected;
+    var callback = function(msg) {
+        me.sendMsg(msg);
+    };
+    var show_elevation_btn = handler.can_elevate() && show_elevation && !c.is_file_transfer && !c.is_view_camera && !c.is_terminal && c.port_forward.length == 0;
+    var show_accept_btn = handler.get_option('approve-mode') != 'password';
+    var no_board = c.is_file_transfer || c.is_terminal || c.port_forward || disconnected;
+    var has_chat = !c.is_file_transfer && !c.is_terminal && !c.port_forward;
+    return <div .content style="size:*">
+        <div .left-panel .taesan-cm-panel>
+            {taesanCmHeader(c, auth && has_chat)}
+            {no_board ? "" : taesanCmPermissions(c, !allow_perm_change_in_accept_window)}
+            <div .taesan-cm-spacer />
+            {taesanCmButtons(auth, disconnected, show_elevation_btn, show_accept_btn)}
+        </div>
+        <div .right-panel style={show_chat ? "" : "display: none"}>
+            {has_chat ? <ChatBox msgs={c.msgs} callback={callback} /> : ""}
+        </div>
+    </div>;
+}
+
+// 머리 카드: n900·반경 8, 아바타 70(반경 15), 이름 20 굵게, (ID) 14, 종류 12, 상태 + 경과 시간, 채팅 아이콘.
+function taesanCmHeader(c, show_chat_icon) {
+    var auth = c.authorized;
+    var kind = c.is_file_transfer ? translate('Transfer file')
+        : c.is_view_camera ? translate('View camera')
+        : c.is_terminal ? translate('Terminal')
+        : c.port_forward ? "Port Forward: " + c.port_forward : "";
+    var state = auth ? (c.disconnected ? translate('Disconnected') : translate('Connected'))
+        : translate('Request access to your device') + "...";
+    return <div .taesan-cm-header>
+        {c.avatar ? <img .taesan-cm-avatar src={c.avatar} />
+            : <div .taesan-cm-avatar style={"background: " + string2RGB(c.name, 1)}>{c.name[0].toUpperCase()}</div>}
+        <div .taesan-cm-who>
+            <div .taesan-cm-name>{c.name}</div>
+            <div .taesan-cm-peer>({c.peer_id})</div>
+            {kind ? <div .taesan-cm-kind>{kind}</div> : ""}
+            <div .taesan-cm-state>{state}{auth ? " " : ""}{auth ? <span #taesan-time>{taesanElapsed(c.time, c.now)}</span> : ""}</div>
+        </div>
+        {show_chat_icon ? <div .chaticon>{taesan_svg.messageSquare}</div> : ""}
+    </div>;
+}
+
+// 권한 보드: '권한' 16 굵게, 4열 정사각 타일(반경 8, 흰 아이콘 24), 켜짐 파랑·꺼짐 n600·바꿀 수 없으면 흐리게.
+function taesanCmPermissions(c, locked) {
+    function tile(name, on, svg, label, show = true) {
+        if (!show) return "";
+        return <icon class={name + " taesan-tile" + (on ? " on" : "") + (locked ? " locked" : "")}
+            title={label + ": " + (on ? "ON" : "OFF")}>{svg}</icon>;
+    }
+    return <div .taesan-perm-board>
+        <div .taesan-perm-title>{translate('Permissions')}</div>
+        <div .taesan-perm-grid>
+            {tile("keyboard", c.keyboard, taesan_svg.keyboard, translate('Enable keyboard/mouse'))}
+            {tile("clipboard", c.clipboard, taesan_svg.clipboardList, translate('Enable clipboard'))}
+            {tile("audio", c.audio, taesan_svg.volume2, translate('Enable audio'))}
+            {tile("file", c.file, taesan_svg.upload, translate('Enable file copy and paste'))}
+            {tile("restart", c.restart, taesan_svg.rotateCcw, translate('Enable remote restart'))}
+            {tile("recording", c.recording, taesan_svg.video, translate('Enable recording session'))}
+            {tile("block_input", c.block_input, taesan_svg.ban, translate('Enable blocking user input'), is_win)}
+            {tile("privacy_mode", c.privacy_mode, taesan_svg.eyeOff, translate('Enable privacy mode'), is_privacy_mode_supported)}
+        </div>
+    </div>;
+}
+
+// 버튼(높이 32, 반경 8, 아이콘 14): 연결 해제 = red600, 권한 상승·수락·닫기 = n900, 수락 및 권한 상승 = green600, 취소 = 테두리.
+function taesanCmButtons(auth, disconnected, show_elevation_btn, show_accept_btn) {
+    if (auth && disconnected) {
+        return <div .taesan-cm-buttons><button #close .taesan-cm-btn .primary>{taesanBtnLabel(null, translate('Close'))}</button></div>;
+    }
+    if (auth) {
+        return <div .taesan-cm-buttons>
+            {show_elevation_btn ? <button #elevate .taesan-cm-btn .primary>{taesanBtnLabel(taesan_svg.shieldCheck, translate('Elevate'))}</button> : ""}
+            <button #disconnect .taesan-cm-btn .danger>{taesanBtnLabel(taesan_svg.unlink, translate('Disconnect'))}</button>
+        </div>;
+    }
+    return <div .taesan-cm-buttons>
+        {show_elevation_btn && show_accept_btn ? <button #elevate_accept .taesan-cm-btn .success>{taesanBtnLabel(taesan_svg.shieldCheck, translate('Accept and Elevate'))}</button> : ""}
+        <div .taesan-cm-row>
+            {show_accept_btn ? <button #accept .taesan-cm-btn .primary>{taesanBtnLabel(null, translate('Accept'))}</button> : ""}
+            <button #dismiss .taesan-cm-btn .outline>{taesanBtnLabel(null, translate('Cancel'))}</button>
+        </div>
+    </div>;
+}
+
+// 아이콘 + 글자를 버튼 가운데에 한 줄로.
+function taesanBtnLabel(svg, text) {
+    return <span .taesan-btn-in>{svg ? svg : ""}<span>{text}</span></span>;
+}
+
+// Flutter formatDurationToTime 처럼 시:분:초(업스트림 getElapsed 는 하루가 넘으면 영어 'day(s)' 를 붙인다).
+function taesanElapsed(time, now) {
+    var seconds = Date.diff(time, now, #seconds);
+    return String.printf("%02d:%02d:%02d", seconds / 3600, seconds % 3600 / 60, seconds % 60);
+}
+
+function taesanCmTimeLoop() {
+    self.timer(1s, function() {
+        var el = $(#taesan-time);
+        if (el && body) {
+            var c = connections[body.cur];
+            if (c && c.authorized && !c.disconnected) el.text = taesanElapsed(c.time, c.now);
+        }
+        taesanCmTimeLoop();
+    });
+}
+
+// ---------------------------------------------------------------- 설치 화면
+// 배치 정본: flutter/lib/desktop/pages/install_page.dart. 클릭 처리는 install.tis 의 업스트림 핸들러(#submit 등)를 쓴다.
+// '경로 변경'(#path)은 두지 않는다 — 설치 경로는 전용 폴더로 고정(부록 A-21, POS 폴더 보호).
+
+function taesanInstall() {
+    const install_options = JSON.parse(view.install_options());
+    const desktop_icon = { checked: install_options?.DESKTOPSHORTCUTS == '0' ? false : true };
+    const startmenu_shortcuts = { checked: install_options?.STARTMENUSHORTCUTS == '0' ? false : true };
+    return <div .content .taesan-install>
+        <div .taesan-install-title>{translate('Installation')}</div>
+        <div .taesan-install-path>
+            <div .taesan-install-label>{translate('Installation Path') + ":"}</div>
+            <input|text disabled value={view.install_path()} #path_input />
+        </div>
+        <div .taesan-install-opt><button|checkbox #startmenu {startmenu_shortcuts}>{translate('Create start menu shortcuts')}</button></div>
+        <div .taesan-install-opt><button|checkbox #desktopicon {desktop_icon}>{translate('Create desktop icon')}</button></div>
+        <div .taesan-install-note>
+            {taesan_svg.info}
+            <div>
+                <div>{translate('agreement_tip')}</div>
+                <div #agreement .taesan-link>{translate('End-user license agreement')}</div>
+            </div>
+        </div>
+        <div .taesan-install-actions>
+            <div .taesan-install-progress><progress style="display: none" /></div>
+            <button .taesan-btn-outline #cancel>{translate('Cancel')}</button>
+            <button .taesan-btn-primary #submit>{translate('Accept and Install')}</button>
+            {handler.show_run_without_install() ? <button .taesan-btn-outline #run-without-install>{translate('Run without install')}</button> : ""}
+        </div>
+    </div>;
+}
+
+/*
+Lucide icons above: https://github.com/lucide-icons/lucide (lucide-static 1.46.0)
+
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+The icons minus, square, x, upload, info, circle-alert and triangle-alert are derived from the Feather project:
+
+The MIT License (MIT)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/

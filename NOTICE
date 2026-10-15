@@ -1,0 +1,32 @@
+Taesan Remote (태산 원격지원)
+=============================
+
+This program is a modified version of RustDesk.
+
+  RustDesk — https://github.com/rustdesk/rustdesk
+  Copyright © Purslane Ltd. and the RustDesk contributors.
+  Licensed under the GNU Affero General Public License, version 3 (see LICENCE).
+
+It is based on a modified RustDesk 1.4.8 (upstream commit 4a54029ca):
+  Modifications — Copyright © 2026 Waldlust Co., Ltd. (AGPL-3.0)
+
+Further modifications — Copyright © 2026 Taesan Remote
+  - Branding: application name, icons, identifiers (com.taesan.remote, taesan://)
+  - Self-hosted relay server address and key supplied at build time
+  - Reporting to any admin server and account login removed; local address book only
+  - Build variants: bidirectional and incoming-only (common password, stored as a hash only)
+
+The modified program is licensed under the GNU Affero General Public License, version 3.
+It is distributed WITHOUT ANY WARRANTY; see LICENCE for details.
+
+Source code
+  The complete corresponding source code is available on request: oasa741@gmail.com
+
+Third-party licenses
+  Each build ships THIRD_PARTY_NOTICES-<platform>.txt.
+
+----------------------------------------------------------------------------------------------------
+한국어 요약
+
+이 프로그램은 RustDesk(© Purslane Ltd. 및 기여자, GNU AGPL-3.0)의 수정본을 다시 수정한 것이다.
+수정본도 GNU AGPL-3.0 으로 배포하며 어떠한 보증도 하지 않는다. 소스 코드는 oasa741@gmail.com 으로 요청하면 제공한다.

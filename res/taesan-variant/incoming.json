@@ -1,0 +1,20 @@
+{
+  "conn-type": "incoming",
+  "disable-settings": "Y",
+  "disable-account": "Y",
+  "disable-ab": "Y",
+  "override-settings": {
+    "verification-method": "use-both-passwords",
+    "approve-mode": "password",
+    "allow-auto-update": "N",
+    "enable-terminal": "N",
+    "enable-tunnel": "N",
+    "enable-remote-printer": "N",
+    "enable-camera": "N",
+    "access-mode": "custom",
+    "disable-change-permanent-password": "Y",
+    "disable-change-id": "Y",
+    "hide-stop-service": "Y",
+    "allow-hide-cm": "N"
+  }
+}
