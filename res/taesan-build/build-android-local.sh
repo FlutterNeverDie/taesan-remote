@@ -15,7 +15,8 @@
 # 전제(한 번 설치해 둔 것):
 #   rustup + 1.75(타깃 aarch64-linux-android, armv7-linux-androideabi),
 #   cargo-ndk 3.1.2 / cargo-expand 1.0.95 / flutter_rust_bridge_codegen 1.80.1(--features uuid),
-#   Flutter 3.22.3(브리지)·3.24.5(앱) — fvm(~/fvm/versions/<버전>) 또는 ~/flutter-sdks/<버전>,
+#   Flutter 3.22.3(브리지)·3.24.5(앱) — fvm(~/fvm/versions/<버전>) 또는 ~/flutter-sdks/<버전>.
+#   3.24.5 는 처음 빌드 때 ~/taesan-build/flutter-3.24.5 로 복사해 패치한다(원본은 건드리지 않는다),
 #   ~/vcpkg-android(microsoft/vcpkg 120deac, bootstrap 완료), Android SDK + NDK r28c(28.2.13676358),
 #   JDK 17(brew openjdk@17), Xcode Command Line Tools, brew: nasm pkgconf autoconf automake libtool
 set -u
@@ -30,7 +31,8 @@ KEYS="$OUT/keys"
 # Flutter SDK: fvm 이 있으면 그쪽, 없으면 ~/flutter-sdks.
 fl() { [ -x "$HOME/fvm/versions/$1/bin/flutter" ] && echo "$HOME/fvm/versions/$1" || echo "$HOME/flutter-sdks/$1"; }
 FL_BRIDGE="${TAESAN_FLUTTER_BRIDGE:-$(fl 3.22.3)}"
-FL_APP="${TAESAN_FLUTTER_APP:-$(fl 3.24.5)}"
+# 앱 빌드용 3.24.5 는 드롭다운 패치(.github/patches)가 필요하다. 공용 SDK 를 고치지 않도록 전용 복사본에만 적용한다.
+FL_APP="${TAESAN_FLUTTER_APP:-$OUT/flutter-3.24.5}"
 
 export PATH="$HOME/.cargo/bin:$PATH"
 # Xcode 27 SDK 를 CLT libclang 이 못 읽어 브리지가 깨진다(uint8_t → Pointer<Int>). CLT SDK 를 쓰게 한다.
@@ -76,6 +78,15 @@ step "worktree $BASE"
 [ -d "$W" ] && git -C "$R" worktree remove --force "$W"
 git -C "$R" worktree add --detach "$W" "$BASE" >/dev/null || die worktree
 cd "$W" || die cd
+
+# 앱용 Flutter 전용 복사본(처음 한 번): fvm/flutter-sdks 의 3.24.5 를 복사해 패치한다.
+if [ ! -x "$FL_APP/bin/flutter" ]; then
+  step "flutter 3.24.5 복사본"
+  SRC_FL="$(fl 3.24.5)"
+  [ -x "$SRC_FL/bin/flutter" ] || die "Flutter 3.24.5 가 없다(fvm install 3.24.5)"
+  rsync -a "$SRC_FL/" "$FL_APP/" || die "Flutter 복사"
+  git -C "$FL_APP" apply "$W/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff" || die "Flutter 패치"
+fi
 
 # 1) 브리지 생성(bridge.yml 재현: Flutter 3.22.3 + extended_text 13 임시 다운그레이드).
 #    macOS: ffigen 에 CLT libclang 경로와 SDK sysroot 를 넘겨야 한다(값이 '-' 로 시작하므로 '=' 형식).
