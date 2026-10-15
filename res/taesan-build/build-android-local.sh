@@ -15,7 +15,7 @@
 # 전제(한 번 설치해 둔 것):
 #   rustup + 1.75(타깃 aarch64-linux-android, armv7-linux-androideabi),
 #   cargo-ndk 3.1.2 / cargo-expand 1.0.95 / flutter_rust_bridge_codegen 1.80.1(--features uuid),
-#   ~/flutter-sdks/3.22.3, ~/flutter-sdks/3.24.5(.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff 적용),
+#   Flutter 3.22.3(브리지)·3.24.5(앱) — fvm(~/fvm/versions/<버전>) 또는 ~/flutter-sdks/<버전>,
 #   ~/vcpkg-android(microsoft/vcpkg 120deac, bootstrap 완료), Android SDK + NDK r28c(28.2.13676358),
 #   JDK 17(brew openjdk@17), Xcode Command Line Tools, brew: nasm pkgconf autoconf automake libtool
 set -u
@@ -27,6 +27,10 @@ BASE="${1:-main}"
 TARGET="${2:-local}"
 case "$TARGET" in local|release) ;; *) echo "FAIL: 대상은 local 또는 release"; exit 1 ;; esac
 KEYS="$OUT/keys"
+# Flutter SDK: fvm 이 있으면 그쪽, 없으면 ~/flutter-sdks.
+fl() { [ -x "$HOME/fvm/versions/$1/bin/flutter" ] && echo "$HOME/fvm/versions/$1" || echo "$HOME/flutter-sdks/$1"; }
+FL_BRIDGE="${TAESAN_FLUTTER_BRIDGE:-$(fl 3.22.3)}"
+FL_APP="${TAESAN_FLUTTER_APP:-$(fl 3.24.5)}"
 
 export PATH="$HOME/.cargo/bin:$PATH"
 # Xcode 27 SDK 를 CLT libclang 이 못 읽어 브리지가 깨진다(uint8_t → Pointer<Int>). CLT SDK 를 쓰게 한다.
@@ -78,7 +82,7 @@ cd "$W" || die cd
 step bridge
 SDK=$(xcrun --show-sdk-path)
 sed -i '' -e 's/extended_text: 14.0.0/extended_text: 13.0.0/g' flutter/pubspec.yaml
-( export PATH="$HOME/flutter-sdks/3.22.3/bin:$PATH"
+( export PATH="$FL_BRIDGE/bin:$PATH"
   (cd flutter && flutter pub get) &&
   flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart \
     --c-output ./flutter/macos/Runner/bridge_generated.h \
@@ -115,7 +119,7 @@ else
   sed -i '' 's/signingConfigs.release/signingConfigs.debug/g' flutter/android/app/build.gradle              # CI 와 같은 debug 서명
 fi
 echo "org.gradle.java.home=$JAVA_HOME" >> flutter/android/gradle.properties
-( export PATH="$JAVA_HOME/bin:$HOME/flutter-sdks/3.24.5/bin:$PATH"
+( export PATH="$JAVA_HOME/bin:$FL_APP/bin:$PATH"
   cd flutter && flutter build apk --release --target-platform android-arm,android-arm64 "${BUILD_NUMBER[@]}"
 ) > "$LOG/apk.log" 2>&1 || die apk
 rm -f flutter/android/key.properties   # release 에서 복사한 키 설정(그 밖 대상에는 없다)
